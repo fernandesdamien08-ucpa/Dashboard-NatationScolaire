@@ -23,6 +23,12 @@ st.markdown(
         --color-grey-light: #e9ecef;
     }
 
+    /* --- SÉCURITÉ & NETTOYAGE INTERFACE (MARQUE BLANCHE) --- */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    [data-testid="stToolbar"] {visibility: hidden;}
+    
     /* --- POLICE GLOBALE --- */
     h1, h2, h3, h4, h5, h6, p, label, button, input, textarea, select, .stTooltip, .stMarkdown {
         font-family: 'Comfortaa', sans-serif !important;
@@ -66,6 +72,7 @@ st.markdown(
     [data-testid="stSidebar"] {
         background-color: var(--color-bg-sidebar);
         border-right: 1px solid var(--color-grey-light);
+        margin-top: 0px !important; /* Remonte la sidebar puisque le header est caché */
     }
     
     [data-testid="stSidebar"] .streamlit-expanderHeader {
@@ -95,6 +102,7 @@ st.markdown(
         justify-content: center;
         height: 100%;
         padding-left: 20px;
+        padding-top: 20px; /* Petit espace car le header est caché */
     }
     
     .main-title-1 {
@@ -202,7 +210,7 @@ if not df_raw.empty:
         st.sidebar.subheader("Année Scolaire")
         annees_dispo = sorted(list(set(df["Saison"].unique())), reverse=True)
         for i, annee in enumerate(annees_dispo):
-            if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}_v45"):
+            if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}_v46"):
                 choix_annees.append(annee)
         if choix_annees: df = df[df["Saison"].isin(choix_annees)]
 
@@ -228,7 +236,7 @@ if not df_raw.empty:
                     if logo: st.image(logo, width=25)
                     else: st.write("")
                 with col_chk:
-                    if st.checkbox(circo, key=f"chk_circo_{i}_v45"): choix_circo.append(circo)
+                    if st.checkbox(circo, key=f"chk_circo_{i}_v46"): choix_circo.append(circo)
         if choix_circo: df = df[df["Circonscription"].isin(choix_circo)]
 
     if "Ecole" in df.columns:
@@ -236,7 +244,7 @@ if not df_raw.empty:
         choix_ecole = []
         with st.sidebar.expander("Écoles", expanded=False):
             for i, ecole in enumerate(ecoles_dispo):
-                if st.checkbox(ecole, key=f"chk_ecole_{i}_v45"): choix_ecole.append(ecole)
+                if st.checkbox(ecole, key=f"chk_ecole_{i}_v46"): choix_ecole.append(ecole)
         if choix_ecole: df = df[df["Ecole"].isin(choix_ecole)]
 
     if "Classe" in df.columns:
@@ -248,7 +256,7 @@ if not df_raw.empty:
         choix_classe = []
         with st.sidebar.expander("Classes", expanded=False):
             for i, classe in enumerate(classes_dispo):
-                if st.checkbox(classe, key=f"chk_classe_{i}_v45"): choix_classe.append(classe)
+                if st.checkbox(classe, key=f"chk_classe_{i}_v46"): choix_classe.append(classe)
         if choix_classe: df = df[df["Classe"].isin(choix_classe)]
 
     # --- 5. DASHBOARD ---
@@ -506,7 +514,7 @@ if not df_raw.empty:
 
     # --- SECTION 4 : ANALYSES CLASSE & ANNÉE (BARRES GROUPÉES) ---
     st.markdown("---")
-    st.markdown("<h3 style='text-align: center; color: #00a896;'>Analyses Comparatives : Classe & Année</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #00a896;'>📈 Analyses Comparatives : Classe & Année</h3>", unsafe_allow_html=True)
     st.markdown("") 
 
     if "Classe" in df.columns and "Saison" in df.columns:
