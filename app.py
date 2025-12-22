@@ -202,7 +202,7 @@ if not df_raw.empty:
         st.sidebar.subheader("Année Scolaire")
         annees_dispo = sorted(list(set(df["Saison"].unique())), reverse=True)
         for i, annee in enumerate(annees_dispo):
-            if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}_v39"):
+            if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}_v45"):
                 choix_annees.append(annee)
         if choix_annees: df = df[df["Saison"].isin(choix_annees)]
 
@@ -228,7 +228,7 @@ if not df_raw.empty:
                     if logo: st.image(logo, width=25)
                     else: st.write("")
                 with col_chk:
-                    if st.checkbox(circo, key=f"chk_circo_{i}_v39"): choix_circo.append(circo)
+                    if st.checkbox(circo, key=f"chk_circo_{i}_v45"): choix_circo.append(circo)
         if choix_circo: df = df[df["Circonscription"].isin(choix_circo)]
 
     if "Ecole" in df.columns:
@@ -236,7 +236,7 @@ if not df_raw.empty:
         choix_ecole = []
         with st.sidebar.expander("Écoles", expanded=False):
             for i, ecole in enumerate(ecoles_dispo):
-                if st.checkbox(ecole, key=f"chk_ecole_{i}_v39"): choix_ecole.append(ecole)
+                if st.checkbox(ecole, key=f"chk_ecole_{i}_v45"): choix_ecole.append(ecole)
         if choix_ecole: df = df[df["Ecole"].isin(choix_ecole)]
 
     if "Classe" in df.columns:
@@ -248,7 +248,7 @@ if not df_raw.empty:
         choix_classe = []
         with st.sidebar.expander("Classes", expanded=False):
             for i, classe in enumerate(classes_dispo):
-                if st.checkbox(classe, key=f"chk_classe_{i}_v39"): choix_classe.append(classe)
+                if st.checkbox(classe, key=f"chk_classe_{i}_v45"): choix_classe.append(classe)
         if choix_classe: df = df[df["Classe"].isin(choix_classe)]
 
     # --- 5. DASHBOARD ---
@@ -346,11 +346,10 @@ if not df_raw.empty:
                              "Pass Nautique avec brassards": "#ead1dc", "Absent": "#cccccc"}
                 fig = px.pie(df_dip, names="Diplome", hole=0.4, color="Diplome", color_discrete_map=color_map)
                 
-                # --- INFOBULLE PERSONNALISÉE ---
                 fig.update_traces(
                     textposition='inside', 
                     textinfo='value+percent', 
-                    hovertemplate = "<b>%{label}</b><br>Nombre : %{value}<br>Part : %{percent}<extra></extra>", # <-- C'est ici !
+                    hovertemplate = "<b>%{label}</b><br>Nombre : %{value}<br>Part : %{percent}<extra></extra>",
                     textfont=dict(color='#4b4b96')
                 )
                 
@@ -370,6 +369,11 @@ if not df_raw.empty:
             fig = px.bar(df_cls, x="Classe", y="Nombre", text_auto=True, color="Classe", 
                          color_discrete_sequence=px.colors.qualitative.Prism)
             fig.update_layout(showlegend=False)
+            
+            fig.update_traces(
+                hovertemplate="<b>%{x}</b><br>Nombre : %{y}<extra></extra>"
+            )
+            
             fig = style_graph_standard(fig, height=350)
             st.plotly_chart(fig, use_container_width=True, config=config_download)
 
@@ -499,6 +503,76 @@ if not df_raw.empty:
         fig.update_yaxes(showgrid=True, gridcolor='#f5f5f5')
         
         st.plotly_chart(fig, use_container_width=True, config=config_download)
+
+    # --- SECTION 4 : ANALYSES CLASSE & ANNÉE (BARRES GROUPÉES) ---
+    st.markdown("---")
+    st.markdown("<h3 style='text-align: center; color: #00a896;'>Analyses Comparatives : Classe & Année</h3>", unsafe_allow_html=True)
+    st.markdown("") 
+
+    if "Classe" in df.columns and "Saison" in df.columns:
+        df_group = df[~df["Classe"].astype(str).str.lower().isin(['nul', 'nan', 'none', ''])].groupby(["Classe", "Saison"])[[c_deb, c_fin]].mean().reset_index()
+        
+        df_group[c_deb] = df_group[c_deb].round(1)
+        df_group[c_fin] = df_group[c_fin].round(1)
+        
+        df_group["order"] = df_group["Classe"].apply(cle_de_tri)
+        df_group = df_group.sort_values(["order", "Saison"])
+        
+        # TRI CHRONOLOGIQUE FORCÉ
+        saisons_triees = sorted(df_group["Saison"].unique())
+        
+        ca1, ca2 = st.columns(2)
+        
+        # --- GRAPHIQUE GAUCHE : NIVEAU DÉBUT ---
+        with ca1:
+            st.markdown("<h4 style='text-align: center;'>Niveau Début par Classe & Année</h4>", unsafe_allow_html=True)
+            fig_deb = px.bar(
+                df_group, 
+                x="Classe", 
+                y=c_deb, 
+                color="Saison", 
+                barmode="group",
+                text_auto=True,
+                color_discrete_sequence=px.colors.qualitative.Pastel,
+                category_orders={"Saison": saisons_triees}
+            )
+            # ICI : Forçage horizontal et infobulle propre
+            fig_deb.update_traces(
+                textangle=0, 
+                textposition='outside',
+                hovertemplate="<b>%{x}</b><br>Année : %{fullData.name}<br>Note : %{y}<extra></extra>"
+            )
+            
+            fig_deb.update_layout(yaxis_title="Note Moyenne", yaxis_range=[0, 13])
+            fig_deb = style_graph_standard(fig_deb, height=500)
+            st.plotly_chart(fig_deb, use_container_width=True, config=config_download)
+            
+        # --- GRAPHIQUE DROITE : NIVEAU FIN ---
+        with ca2:
+            st.markdown("<h4 style='text-align: center;'>Niveau Fin par Classe & Année</h4>", unsafe_allow_html=True)
+            fig_fin = px.bar(
+                df_group, 
+                x="Classe", 
+                y=c_fin, 
+                color="Saison", 
+                barmode="group",
+                text_auto=True,
+                color_discrete_sequence=px.colors.qualitative.Pastel,
+                category_orders={"Saison": saisons_triees}
+            )
+            # ICI : Forçage horizontal et infobulle propre
+            fig_fin.update_traces(
+                textangle=0, 
+                textposition='outside',
+                hovertemplate="<b>%{x}</b><br>Année : %{fullData.name}<br>Note : %{y}<extra></extra>"
+            )
+            
+            fig_fin.update_layout(yaxis_title="Note Moyenne", yaxis_range=[0, 13])
+            fig_fin = style_graph_standard(fig_fin, height=500)
+            st.plotly_chart(fig_fin, use_container_width=True, config=config_download)
+            
+    else:
+        st.info("Données insuffisantes pour l'analyse par année.")
 
     # --- PIED DE PAGE ---
     st.markdown("---")
