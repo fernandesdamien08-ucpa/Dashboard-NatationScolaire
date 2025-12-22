@@ -15,7 +15,10 @@ st.markdown(
     :root {
         --color-bg-main: #ffffff;
         --color-bg-sidebar: #f8f9fa;
-        --color-text-primary: #333333;
+        
+        /* Couleur principale du texte (Bleu/Violet) */
+        --color-text-primary: #4b4b96; 
+        
         --color-teal-primary: #00a896;
         --color-teal-light: #4db6ac;
         --color-blue-title: #005b96;
@@ -26,11 +29,40 @@ st.markdown(
     /* --- POLICE GLOBALE --- */
     h1, h2, h3, h4, h5, h6, p, label, button, input, textarea, select, .stTooltip {
         font-family: 'Comfortaa', sans-serif !important;
-        color: var(--color-text-primary);
+        color: var(--color-text-primary) !important;
     }
     
-    .stCheckbox label p, .stRadio label p, .stMultiSelect label p {
+    /* --- TAILLE POLICE CHECKBOX --- */
+    .stCheckbox p, .stRadio p, .stMultiSelect span, .stMultiSelect p {
         font-family: 'Comfortaa', sans-serif !important;
+        font-size: 0.85rem !important;
+        color: var(--color-text-primary) !important;
+    }
+
+    /* --- 1. RÉGLAGE ESPACEMENT LISTES SIMPLES (ÉCOLES/CLASSES) --- */
+    div[data-testid="stCheckbox"] {
+        min-height: 0px !important;
+        margin-top: -4px !important; 
+        margin-bottom: -4px !important; 
+    }
+
+    /* --- 2. RÉGLAGE SPÉCIAL CIRCONSCRIPTIONS (LIGNES AVEC LOGOS) --- */
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {
+        min-height: 0px !important;
+        padding: 0px !important;
+        margin-top: -8px !important;
+        margin-bottom: -8px !important;
+        align-items: center !important;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stImage"] {
+        margin-bottom: 0px !important;
+        margin-top: 0px !important;
+    }
+    
+    [data-testid="stSidebar"] [data-testid="column"] {
+        display: flex !important;
+        align-items: center !important;
     }
 
     /* --- SIDEBAR --- */
@@ -51,7 +83,7 @@ st.markdown(
         font-family: 'Comfortaa', sans-serif !important;
         font-weight: 700;
         font-size: 1rem;
-        color: var(--color-purple-label);
+        color: var(--color-purple-label) !important;
     }
     
     [data-testid="stSidebar"] .streamlit-expanderHeader svg, 
@@ -173,7 +205,7 @@ if not df_raw.empty:
         st.sidebar.subheader("📅 Année Scolaire")
         annees_dispo = sorted(list(set(df["Saison"].unique())), reverse=True)
         for i, annee in enumerate(annees_dispo):
-            if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}_v19"):
+            if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}_v28"):
                 choix_annees.append(annee)
         if choix_annees: df = df[df["Saison"].isin(choix_annees)]
 
@@ -189,17 +221,17 @@ if not df_raw.empty:
         }
         with st.sidebar.expander("📍 Circonscriptions", expanded=False):
             for i, circo in enumerate(circo_dispo):
-                col_img, col_chk = st.columns([1, 4])
+                col_img, col_chk = st.columns([0.15, 0.85])
                 logo = None
                 if "mérignac" in str(circo).lower(): logo = logos_villes["mérignac"]
                 elif "martignas" in str(circo).lower(): logo = logos_villes["martignas"]
                 elif "bordeaux" in str(circo).lower(): logo = logos_villes["bordeaux"]
                 
                 with col_img:
-                    if logo: st.image(logo, width=30)
+                    if logo: st.image(logo, width=25)
                     else: st.write("📍")
                 with col_chk:
-                    if st.checkbox(circo, key=f"chk_circo_{i}_v19"): choix_circo.append(circo)
+                    if st.checkbox(circo, key=f"chk_circo_{i}_v28"): choix_circo.append(circo)
         if choix_circo: df = df[df["Circonscription"].isin(choix_circo)]
 
     if "Ecole" in df.columns:
@@ -207,7 +239,7 @@ if not df_raw.empty:
         choix_ecole = []
         with st.sidebar.expander("🏫 Écoles", expanded=False):
             for i, ecole in enumerate(ecoles_dispo):
-                if st.checkbox(ecole, key=f"chk_ecole_{i}_v19"): choix_ecole.append(ecole)
+                if st.checkbox(ecole, key=f"chk_ecole_{i}_v28"): choix_ecole.append(ecole)
         if choix_ecole: df = df[df["Ecole"].isin(choix_ecole)]
 
     if "Classe" in df.columns:
@@ -219,7 +251,7 @@ if not df_raw.empty:
         choix_classe = []
         with st.sidebar.expander("📚 Classes", expanded=False):
             for i, classe in enumerate(classes_dispo):
-                if st.checkbox(classe, key=f"chk_classe_{i}_v19"): choix_classe.append(classe)
+                if st.checkbox(classe, key=f"chk_classe_{i}_v28"): choix_classe.append(classe)
         if choix_classe: df = df[df["Classe"].isin(choix_classe)]
 
     # --- 5. DASHBOARD ---
@@ -252,20 +284,40 @@ if not df_raw.empty:
     col3.metric("Diplômes Délivrés", nb_diplomes)
     st.markdown("---")
 
-    # --- STYLES ---
+    # --- CONFIGURATION DU TÉLÉCHARGEMENT IMAGE (HD) ---
+    config_download = {
+        'displayModeBar': True,
+        'displaylogo': False,
+        'modeBarButtonsToRemove': ['zoom', 'pan', 'select', 'lasso2d', 'autoScale2d'],
+        'toImageButtonOptions': {
+            'format': 'png',
+            'filename': 'graphique_ucpa',
+            'height': 800,
+            'width': 1200,
+            'scale': 2
+        }
+    }
+
+    # --- STYLES GRAPHIQUES ---
     def style_graph_standard(fig, height=None):
         fig.update_layout(
-            font_family="Comfortaa", title=None,
+            font_family="Comfortaa", 
+            font_color="#4b4b96", # COULEUR GLOBALE
+            title=None,
             hoverlabel=dict(font=dict(family="Comfortaa"), bgcolor="white", bordercolor="#e9ecef"),
             margin=dict(l=20, r=20, t=30, b=20), hovermode="closest",
-            title_text=""
+            title_text="",
+            # AJOUT ICI : FORCE LA COULEUR DE LA LÉGENDE
+            legend=dict(font=dict(color="#4b4b96"))
         )
         if height: fig.update_layout(height=height)
         return fig
 
     def style_gauge(fig, height=None):
         fig.update_layout(
-            font_family="Comfortaa", title=None,
+            font_family="Comfortaa", 
+            font_color="#4b4b96",
+            title=None,
             margin=dict(l=25, r=25, t=30, b=10),
             title_text=""
         )
@@ -283,9 +335,17 @@ if not df_raw.empty:
                 color_map = {"ASNS": "#6d9eeb", "Pass Nautique": "#c27ba0", "Aucun test": "#e06666", 
                              "Pass Nautique avec brassards": "#ead1dc", "Absent": "#cccccc"}
                 fig = px.pie(df_dip, names="Diplome", hole=0.4, color="Diplome", color_discrete_map=color_map)
-                fig.update_traces(textposition='inside', textinfo='value+percent', hoverinfo='label+value+percent')
+                
+                # FORCE LA COULEUR À L'INTÉRIEUR DU CAMEMBERT
+                fig.update_traces(
+                    textposition='inside', 
+                    textinfo='value+percent', 
+                    hoverinfo='label+value+percent',
+                    textfont=dict(color='#4b4b96')
+                )
+                
                 fig = style_graph_standard(fig, height=350)
-                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+                st.plotly_chart(fig, use_container_width=True, config=config_download)
             else: st.info("Pas de données.")
 
     with g2:
@@ -299,17 +359,17 @@ if not df_raw.empty:
                 cj1, cj2 = st.columns(2)
                 with cj1:
                     fig_s = go.Figure(go.Indicator(
-                        mode="gauge+number", value=m_deb, title={'text': "Début", 'font': {'size': 14, 'family': 'Comfortaa'}},
-                        gauge={'axis': {'range': [None, 12], 'tickfont': {'family': 'Comfortaa'}}, 'bar': {'color': "#adb5bd"}}))
+                        mode="gauge+number", value=m_deb, title={'text': "Début", 'font': {'size': 14, 'family': 'Comfortaa', 'color': '#4b4b96'}},
+                        gauge={'axis': {'range': [None, 12], 'tickfont': {'family': 'Comfortaa', 'color': '#4b4b96'}}, 'bar': {'color': "#adb5bd"}}))
                     fig_s = style_gauge(fig_s, height=220)
-                    st.plotly_chart(fig_s, use_container_width=True, config={'displayModeBar': False})
+                    st.plotly_chart(fig_s, use_container_width=True, config=config_download)
                 with cj2:
                     fig_e = go.Figure(go.Indicator(
-                        mode="gauge+number+delta", value=m_fin, title={'text': "Fin", 'font': {'size': 14, 'family': 'Comfortaa'}},
+                        mode="gauge+number+delta", value=m_fin, title={'text': "Fin", 'font': {'size': 14, 'family': 'Comfortaa', 'color': '#4b4b96'}},
                         delta={'reference': m_deb, 'increasing': {'color': "#00a896"}},
-                        gauge={'axis': {'range': [None, 12], 'tickfont': {'family': 'Comfortaa'}}, 'bar': {'color': "#00a896"}}))
+                        gauge={'axis': {'range': [None, 12], 'tickfont': {'family': 'Comfortaa', 'color': '#4b4b96'}}, 'bar': {'color': "#00a896"}}))
                     fig_e = style_gauge(fig_e, height=220)
-                    st.plotly_chart(fig_e, use_container_width=True, config={'displayModeBar': False})
+                    st.plotly_chart(fig_e, use_container_width=True, config=config_download)
             else: st.info("Données insuffisantes.")
 
     st.markdown("---")
@@ -334,7 +394,7 @@ if not df_raw.empty:
                               yaxis=dict(tickmode='linear', dtick=1, title="Note"),
                               legend=dict(orientation="h", y=1.1))
             fig = style_graph_standard(fig, height=400)
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig, use_container_width=True, config=config_download)
 
     with c_cls:
         st.subheader("📚 Répartition par Classe")
@@ -349,11 +409,11 @@ if not df_raw.empty:
                          color_discrete_sequence=px.colors.qualitative.Prism)
             fig.update_layout(showlegend=False)
             fig = style_graph_standard(fig, height=400)
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig, use_container_width=True, config=config_download)
 
     st.markdown("---")
 
-    # --- SECTION 3 : SCATTER PLOT AVEC MARGE 0.5 ---
+    # --- SECTION 3 : SCATTER PLOT ---
     st.subheader("🏫 Performance par École")
     if "Ecole" in df.columns and len(df.columns) > 30:
         df_eco = df.groupby("Ecole").agg({c_deb: 'mean', c_fin: 'mean', df.columns[0]: 'count'}).reset_index()
@@ -363,14 +423,12 @@ if not df_raw.empty:
         x_min, x_max = df_eco["Moy_Deb"].min(), df_eco["Moy_Deb"].max()
         y_min, y_max = df_eco["Moy_Fin"].min(), df_eco["Moy_Fin"].max()
         
-        # Marge de lisibilité
         pad = 0.5 
         
         fig = px.scatter(df_eco, x="Moy_Deb", y="Moy_Fin", size="Nb_Eleves", color="Ecole", 
                          text="Ecole", hover_name="Ecole", color_discrete_sequence=px.colors.qualitative.Vivid)
         
         fig.update_layout(
-            # AXES CALÉS SUR LES DONNÉES + 0.5
             xaxis_range=[x_min - pad, x_max + pad], 
             yaxis_range=[y_min - pad, y_max + pad],
             xaxis_title="Moyenne Début", yaxis_title="Moyenne Fin",
@@ -379,9 +437,8 @@ if not df_raw.empty:
         )
         fig.update_traces(textposition='top center')
         
-        # Hauteur standard 550px
         fig = style_graph_standard(fig, height=550)
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig, use_container_width=True, config=config_download)
     
     with st.expander("Voir données brutes"):
         st.dataframe(df, use_container_width=True)
