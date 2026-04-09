@@ -97,12 +97,11 @@ def check_password():
     st.markdown('<div class="login-title">RÉSULTATS DES SCOLAIRES</div>', unsafe_allow_html=True)
     st.markdown('<div class="login-subtitle">de l\'UCPA AQUA STADIUM</div>', unsafe_allow_html=True)
 
-    # Utilisation des colonnes Streamlit pour créer un formulaire centré (garantit le bon fonctionnement)
+    # Utilisation des colonnes Streamlit pour créer un formulaire centré
     col_gauche, col_centre, col_droite = st.columns([1, 1.5, 1])
     with col_centre:
         st.markdown("<p style='color: white; font-family: Comfortaa; margin-bottom: 5px; font-size: 0.9rem;'>Accès sécurisé</p>", unsafe_allow_html=True)
         
-        # Le champ de saisie fonctionnera parfaitement ici car c'est un vrai widget Streamlit
         pwd = st.text_input("Mot de passe", type="password", label_visibility="collapsed", placeholder="Saisissez votre mot de passe...")
         
         if st.button("ENTRER", use_container_width=True):
@@ -285,7 +284,10 @@ if not df_raw.empty:
         df[c_fin] = pd.to_numeric(df[c_fin], errors='coerce')
 
     if "Année scolaire" in df.columns:
-        df = df[df["Année scolaire"] != 'nan']
+        # --- NOUVEAU FILTRE ANTI-NAN ROBUSTE ---
+        mots_interdits = ['nan', 'none', 'nul', '', '<na>']
+        df = df[~df["Année scolaire"].astype(str).str.lower().str.strip().isin(mots_interdits)]
+        
         def format_saison(valeur):
             try:
                 annee = int(float(valeur))
