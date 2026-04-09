@@ -252,14 +252,16 @@ def load_data():
     try:
         df = pd.read_csv(url, on_bad_lines='skip', engine='python')
         cols = list(df.columns)
-        if len(cols) > 28:
+        
+        # NOUVEAUX INDEX BASÉS SUR LA NOUVELLE CAPTURE D'ÉCRAN
+        if len(cols) > 9:
             cols[0] = "Année scolaire"
             cols[2] = "Circonscription" 
             cols[4] = "Ecole"           
             cols[5] = "Classe"          
-            cols[21] = "Diplome"        
-            cols[26] = "Note Début"     
-            cols[28] = "Note Fin"       
+            cols[6] = "Diplome"         # Ancien 21, maintenant 6
+            cols[7] = "Note Début"      # Ancien 26, maintenant 7
+            cols[9] = "Note Fin"        # Ancien 28, maintenant 9
             
         df.columns = cols
         df = df.loc[:, ~df.columns.duplicated()]
@@ -505,7 +507,7 @@ if not df_raw.empty:
 
     if "Classe" in df.columns and "Saison" in df.columns and c_deb in df.columns and c_fin in df.columns:
         
-        # NOUVELLE LOGIQUE : Calcul de la moyenne ET du compte des élèves
+        # Calcul de la moyenne ET du compte des élèves
         df_valid_classes = df[~df["Classe"].astype(str).str.lower().isin(['nul', 'nan', 'none', ''])]
         
         df_group = df_valid_classes.groupby(["Classe", "Saison"]).agg(
@@ -527,14 +529,11 @@ if not df_raw.empty:
         with ca1:
             st.markdown("<h4 style='text-align: center;'>Niveau Début</h4>", unsafe_allow_html=True)
             
-            # Injection de "Nb_Deb" dans custom_data
             fig_deb = px.bar(
                 df_group, x="Classe", y=c_deb, color="Saison", barmode="group", text_auto='.1f', 
                 color_discrete_sequence=px.colors.qualitative.Pastel, category_orders={"Saison": saisons_triees},
                 custom_data=["Nb_Deb"] 
             )
-            
-            # Formatage de l'infobulle avec customdata[0]
             fig_deb.update_traces(
                 textangle=0, textposition='outside', 
                 hovertemplate="<b>%{x}</b><br>Année : %{fullData.name}<br>Note : %{y:.1f}<br>Nombre d'élèves : %{customdata[0]}<extra></extra>"
@@ -545,14 +544,11 @@ if not df_raw.empty:
         with ca2:
             st.markdown("<h4 style='text-align: center;'>Niveau Fin</h4>", unsafe_allow_html=True)
             
-            # Injection de "Nb_Fin" dans custom_data
             fig_fin = px.bar(
                 df_group, x="Classe", y=c_fin, color="Saison", barmode="group", text_auto='.1f', 
                 color_discrete_sequence=px.colors.qualitative.Pastel, category_orders={"Saison": saisons_triees},
                 custom_data=["Nb_Fin"] 
             )
-            
-            # Formatage de l'infobulle avec customdata[0]
             fig_fin.update_traces(
                 textangle=0, textposition='outside', 
                 hovertemplate="<b>%{x}</b><br>Année : %{fullData.name}<br>Note : %{y:.1f}<br>Nombre d'élèves : %{customdata[0]}<extra></extra>"
