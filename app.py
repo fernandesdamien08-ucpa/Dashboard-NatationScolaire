@@ -285,10 +285,9 @@ if not df_raw.empty:
 
     if "Année scolaire" in df.columns:
         def format_saison(valeur):
-            # Transformation en minuscule et suppression des espaces pour comparer proprement
             val_str = str(valeur).strip().lower()
             
-            # --- LE BULLDOZER ANTI-NAN EST ICI ---
+            # Filtre Anti-NaN Radical
             if val_str in ['nan', 'none', 'nul', '', '<na>']:
                 return "Invalide"
                 
@@ -299,8 +298,6 @@ if not df_raw.empty:
                 return str(valeur)
                 
         df["Saison"] = df["Année scolaire"].apply(format_saison)
-        
-        # SUPPRESSION RADICALE : on détruit les lignes identifiées comme invalides (lignes vides du sheets)
         df = df[df["Saison"] != "Invalide"]
     else:
         df["Saison"] = "Inconnue"
@@ -308,7 +305,6 @@ if not df_raw.empty:
     # --- 5. FILTRES ---
     st.sidebar.header("Filtres")
 
-    # Double sécurité : une fonction pour nettoyer TOUS les filtres restants
     def get_unique_sorted(series):
         raw_vals = series.dropna().unique()
         clean_vals = []
@@ -321,13 +317,10 @@ if not df_raw.empty:
     choix_annees = []
     if "Saison" in df.columns:
         st.sidebar.subheader("Année Scolaire")
-        
-        # On s'assure que 'nan' ne peut physiquement plus être listé
         annees_propres = [str(a).strip() for a in df["Saison"].unique() if str(a).strip().lower() not in ['nan', 'none', 'nul', '', '<na>']]
         annees_dispo = sorted(list(set(annees_propres)), reverse=True)
         
         for i, annee in enumerate(annees_dispo):
-            # Coche automatiquement uniquement la première vraie année
             if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}"):
                 choix_annees.append(annee)
         if choix_annees: df = df[df["Saison"].isin(choix_annees)]
@@ -511,7 +504,21 @@ if not df_raw.empty:
     st.markdown("") 
 
     if "Classe" in df.columns and "Saison" in df.columns and c_deb in df.columns and c_fin in df.columns:
-        df_group = df[~df["Classe"].astype(str).str.lower().isin(['nul', 'nan', 'none', ''])].groupby(["Classe", "Saison"])[[c_deb, c_fin]].mean().reset_index()
+        
+        # NOUVELLE LOGIQUE : Calcul de la moyenne ET du compte des élèves
+        df_valid_classes = df[~df["Classe"].astype(str).str.lower().isin(['nul', 'nan', 'none', ''])]
+        
+        df_group = df_valid_classes.groupby(["Classe", "Saison"]).agg(
+            Moy_Deb=(c_deb, 'mean'),
+            Nb_Deb=(c_deb, 'count'),
+            Moy_Fin=(c_fin, 'mean'),
+            Nb_Fin=(c_fin, 'count')
+        ).reset_index()
+        
+        # On remet les noms originaux pour la compatibilité avec Plotly
+        df_group[c_deb] = df_group["Moy_Deb"].round(1)
+        df_group[c_fin] = df_group["Moy_Fin"].round(1)
+
         df_group["order"] = df_group["Classe"].apply(cle_de_tri)
         df_group = df_group.sort_values(["order", "Saison"])
         saisons_triees = sorted(df_group["Saison"].unique())
@@ -519,15 +526,37 @@ if not df_raw.empty:
         ca1, ca2 = st.columns(2)
         with ca1:
             st.markdown("<h4 style='text-align: center;'>Niveau Début</h4>", unsafe_allow_html=True)
-            fig_deb = px.bar(df_group, x="Classe", y=c_deb, color="Saison", barmode="group", text_auto=True, color_discrete_sequence=px.colors.qualitative.Pastel, category_orders={"Saison": saisons_triees})
-            fig_deb.update_traces(textangle=0, textposition='outside')
+            
+            # Injection de "Nb_Deb" dans custom_data
+            fig_deb = px.bar(
+                df_group, x="Classe", y=c_deb, color="Saison", barmode="group", text_auto='.1f', 
+                color_discrete_sequence=px.colors.qualitative.Pastel, category_orders={"Saison": saisons_triees},
+                custom_data=["Nb_Deb"] 
+            )
+            
+            # Formatage de l'infobulle avec customdata[0]
+            fig_deb.update_traces(
+                textangle=0, textposition='outside', 
+                hovertemplate="<b>%{x}</b><br>Année : %{fullData.name}<br>Note : %{y:.1f}<br>Nombre d'élèves : %{customdata[0]}<extra></extra>"
+            )
             fig_deb.update_layout(yaxis_title="Note Moyenne", yaxis_range=[0, 13])
             st.plotly_chart(style_graph_standard(fig_deb, 500), use_container_width=True, config=config_download)
              
         with ca2:
             st.markdown("<h4 style='text-align: center;'>Niveau Fin</h4>", unsafe_allow_html=True)
-            fig_fin = px.bar(df_group, x="Classe", y=c_fin, color="Saison", barmode="group", text_auto=True, color_discrete_sequence=px.colors.qualitative.Pastel, category_orders={"Saison": saisons_triees})
-            fig_fin.update_traces(textangle=0, textposition='outside')
+            
+            # Injection de "Nb_Fin" dans custom_data
+            fig_fin = px.bar(
+                df_group, x="Classe", y=c_fin, color="Saison", barmode="group", text_auto='.1f', 
+                color_discrete_sequence=px.colors.qualitative.Pastel, category_orders={"Saison": saisons_triees},
+                custom_data=["Nb_Fin"] 
+            )
+            
+            # Formatage de l'infobulle avec customdata[0]
+            fig_fin.update_traces(
+                textangle=0, textposition='outside', 
+                hovertemplate="<b>%{x}</b><br>Année : %{fullData.name}<br>Note : %{y:.1f}<br>Nombre d'élèves : %{customdata[0]}<extra></extra>"
+            )
             fig_fin.update_layout(yaxis_title="Note Moyenne", yaxis_range=[0, 13])
             st.plotly_chart(style_graph_standard(fig_fin, 500), use_container_width=True, config=config_download)
     else: st.info("Données insuffisantes pour l'analyse par année.")
