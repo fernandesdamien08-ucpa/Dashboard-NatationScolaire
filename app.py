@@ -149,7 +149,7 @@ st.markdown(
 # --- 2. CHARGEMENT DES DONNÉES ---
 @st.cache_data
 def load_data():
-    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQEtHKsiIf4zjKsdYoW9TAFFTLaiXGw9rQwdNRV0nexX179GYktIeqWfMFv0IRV0Col0quuyGc6DSqG/pub?output=csv"
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiM1qN1rl2Zdn9BnMa8H1MU-6irSb-_EtAAD4xlr-4ayiy04_BgXbHVV0CHnPnjsYzj0erotWcNXgl/pubhtml?gid=0&single=true"
     try:
         df = pd.read_csv(url, on_bad_lines='skip', engine='python')
         df.columns = df.columns.str.strip()
