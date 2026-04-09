@@ -8,17 +8,126 @@ st.set_page_config(
     page_title="Résultats des Scolaires - UCPA Aqua Stadium", 
     layout="wide", 
     page_icon="🏊",
-    initial_sidebar_state="expanded" # Force l'ouverture au démarrage
+    initial_sidebar_state="expanded"
 )
 
-# --- CSS PERSONNALISÉ (CORRIGÉ & STABILISÉ) ---
+# Import de la police Comfortaa globalement
+st.markdown("<style>@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');</style>", unsafe_allow_html=True)
+
+# --- 2. SYSTÈME DE SÉCURITÉ (MOT DE PASSE - VERSION NATIVE ET STABLE) ---
+def check_password():
+    """Renvoie True si le mot de passe est correct, bloque l'app sinon."""
+    
+    if st.session_state.get("password_correct", False):
+        return True
+
+    # CSS spécifique et temporaire pour la page de connexion (Fond Violet)
+    st.markdown(
+        """
+        <style>
+        /* Fond violet foncé */
+        .stApp {
+            background-color: #302675;
+        }
+        
+        /* Cacher les éléments inutiles de Streamlit */
+        .stDeployButton, footer, header, [data-testid="stDecoration"] {
+            display: none !important;
+        }
+
+        /* Style du titre central */
+        .login-title {
+            color: #00a896;
+            font-family: 'Comfortaa', sans-serif;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 15vh;
+            margin-bottom: 5px;
+        }
+        .login-subtitle {
+            color: white;
+            font-family: 'Comfortaa', sans-serif;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 60px;
+            opacity: 0.8;
+        }
+
+        /* Personnalisation native du champ Streamlit */
+        div[data-testid="stTextInput"] input {
+            background-color: white;
+            border: 2px solid #00a896;
+            border-radius: 10px;
+            padding: 12px 20px;
+            color: #302675;
+            font-family: 'Comfortaa', sans-serif;
+            font-size: 1rem;
+        }
+        
+        div[data-testid="stTextInput"] input:focus {
+            border-color: #6f42c1;
+            box-shadow: 0 0 0 1px #6f42c1;
+        }
+
+        /* Personnalisation native du bouton Streamlit */
+        div[data-testid="stButton"] button {
+            background-color: #00a896;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 0px;
+            font-family: 'Comfortaa', sans-serif;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        div[data-testid="stButton"] button:hover {
+            background-color: #008f81;
+            color: white;
+            transform: translateY(-2px);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Affichage du texte
+    st.markdown('<div class="login-title">RÉSULTATS DES SCOLAIRES</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-subtitle">de l\'UCPA AQUA STADIUM</div>', unsafe_allow_html=True)
+
+    # Utilisation des colonnes Streamlit pour créer un formulaire centré (garantit le bon fonctionnement)
+    col_gauche, col_centre, col_droite = st.columns([1, 1.5, 1])
+    with col_centre:
+        st.markdown("<p style='color: white; font-family: Comfortaa; margin-bottom: 5px; font-size: 0.9rem;'>Accès sécurisé</p>", unsafe_allow_html=True)
+        
+        # Le champ de saisie fonctionnera parfaitement ici car c'est un vrai widget Streamlit
+        pwd = st.text_input("Mot de passe", type="password", label_visibility="collapsed", placeholder="Saisissez votre mot de passe...")
+        
+        if st.button("ENTRER", use_container_width=True):
+            if pwd == "Aqua2025":  # 👇 Le mot de passe est ici
+                st.session_state["password_correct"] = True
+                st.rerun() # Recharge la page en autorisant l'accès
+            else:
+                st.error("Mot de passe incorrect.")
+
+    return False
+
+# Blocage de l'application tant que le mot de passe n'est pas bon
+if not check_password():
+    st.stop()
+
+
+# ==========================================
+# --- LA SUITE NE S'AFFICHE QU'APRÈS CONNEXION ---
+# ==========================================
+
+# CSS DU DASHBOARD (Écrase le fond violet pour remettre le fond blanc)
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
-
     :root {
-        --color-bg-main: #ffffff;
         --color-bg-sidebar: #f8f9fa;
         --color-text-primary: #4b4b96; 
         --color-teal-primary: #00a896;
@@ -27,16 +136,15 @@ st.markdown(
         --color-purple-label: #6f42c1;
         --color-grey-light: #e9ecef;
     }
+    
+    /* Retour au fond blanc normal */
+    .stApp { background-color: #ffffff !important; }
 
-    /* --- NETTOYAGE CIBLÉ --- */
+    /* --- NETTOYAGE --- */
     .stDeployButton {display:none;}
     footer {visibility: hidden;}
     [data-testid="stDecoration"] {display: none;}
-     
-    /* On garde le header transparent mais visible pour le bouton menu */
     header {background-color: transparent !important;}
-     
-    /* On force l'affichage du bouton hamburger en couleur visible */
     [data-testid="stSidebarCollapsedControl"] {
         display: block !important;
         visibility: visible !important;
@@ -52,9 +160,7 @@ st.markdown(
     .stCheckbox p, .stRadio p, .stMultiSelect span, .stMultiSelect p {
         font-family: 'Comfortaa', sans-serif !important;
         font-size: 0.80rem !important;
-        color: var(--color-text-primary) !important;
     }
-
     div[data-testid="stCheckbox"] {
         min-height: 0px !important;
         margin-top: -4px !important; 
@@ -66,7 +172,6 @@ st.markdown(
         background-color: var(--color-bg-sidebar);
         border-right: 1px solid var(--color-grey-light);
     }
-     
     [data-testid="stSidebar"] .streamlit-expanderHeader {
         background-color: white;
         border-radius: 8px;
@@ -74,9 +179,7 @@ st.markdown(
         margin-bottom: 5px;
         color: var(--color-purple-label);
     }
-     
     [data-testid="stSidebar"] .streamlit-expanderHeader p {
-        font-family: 'Comfortaa', sans-serif !important;
         font-weight: 700;
         font-size: 1rem;
         color: var(--color-purple-label) !important;
@@ -120,14 +223,12 @@ st.markdown(
         color: var(--color-purple-label) !important;
         font-weight: 700;
         text-transform: uppercase;
-        font-family: 'Comfortaa', sans-serif !important;
     }
     [data-testid="stMetricValue"] {
         color: var(--color-teal-primary) !important;
         font-weight: 700;
         font-size: 2.2rem !important;
     }
-     
     [data-testid="stPlotlyChart"] {
         background-color: white;
         padding: 0px;
@@ -135,7 +236,6 @@ st.markdown(
         border: none;
         box-shadow: none;
     }
-     
     hr {
         margin: 1.5rem 0;
         border-color: var(--color-teal-light);
@@ -146,31 +246,46 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- 2. CHARGEMENT DES DONNÉES ---
+# --- 3. CHARGEMENT DES DONNÉES ---
 @st.cache_data
 def load_data():
-    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiM1qN1rl2Zdn9BnMa8H1MU-6irSb-_EtAAD4xlr-4ayiy04_BgXbHVV0CHnPnjsYzj0erotWcNXgl/pub?output=csv"
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVNoxMgIGXdekwj5718tcBauk4vr2wm7J05_Opx5zT432nBuEol53W_HEsLe1WM8icSrK79pF3stRq/pub?gid=0&single=true&output=csv"
     try:
         df = pd.read_csv(url, on_bad_lines='skip', engine='python')
-        df.columns = df.columns.str.strip()
-        cols_text = ["Année scolaire", "Circonscription", "Ecole", "Classe"]
-        for c in cols_text:
+        cols = list(df.columns)
+        if len(cols) > 28:
+            cols[0] = "Année scolaire"
+            cols[2] = "Circonscription" 
+            cols[4] = "Ecole"           
+            cols[5] = "Classe"          
+            cols[21] = "Diplome"        
+            cols[26] = "Note Début"     
+            cols[28] = "Note Fin"       
+            
+        df.columns = cols
+        df = df.loc[:, ~df.columns.duplicated()]
+        
+        cols_to_clean = ["Année scolaire", "Circonscription", "Ecole", "Classe"]
+        for c in cols_to_clean:
             if c in df.columns:
                 df[c] = df[c].astype(str).str.strip()
         return df
     except Exception as e:
-        st.error(f"Erreur CSV : {e}")
+        st.error(f"Erreur de lecture du fichier : {e}")
         return pd.DataFrame()
 
 df_raw = load_data()
 
 if not df_raw.empty:
+    # --- 4. PRÉPARATION ---
+    df = df_raw.copy()
+    c_deb, c_fin = "Note Début", "Note Fin"
+    if c_deb in df.columns and c_fin in df.columns:
+        df[c_deb] = pd.to_numeric(df[c_deb], errors='coerce')
+        df[c_fin] = pd.to_numeric(df[c_fin], errors='coerce')
 
-    # --- 3. PRÉPARATION ---
-    if "Année scolaire" in df_raw.columns:
-        df = df_raw.copy()
+    if "Année scolaire" in df.columns:
         df = df[df["Année scolaire"] != 'nan']
-         
         def format_saison(valeur):
             try:
                 annee = int(float(valeur))
@@ -179,10 +294,9 @@ if not df_raw.empty:
                 return str(valeur)
         df["Saison"] = df["Année scolaire"].apply(format_saison)
     else:
-        df = df_raw.copy()
         df["Saison"] = "Inconnue"
 
-    # --- 4. FILTRES ---
+    # --- 5. FILTRES ---
     st.sidebar.header("Filtres")
 
     def get_unique_sorted(series):
@@ -193,7 +307,7 @@ if not df_raw.empty:
         st.sidebar.subheader("Année Scolaire")
         annees_dispo = sorted(list(set(df["Saison"].unique())), reverse=True)
         for i, annee in enumerate(annees_dispo):
-            if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}_v46"):
+            if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}"):
                 choix_annees.append(annee)
         if choix_annees: df = df[df["Saison"].isin(choix_annees)]
 
@@ -214,12 +328,12 @@ if not df_raw.empty:
                 if "mérignac" in str(circo).lower(): logo = logos_villes["mérignac"]
                 elif "martignas" in str(circo).lower(): logo = logos_villes["martignas"]
                 elif "bordeaux" in str(circo).lower(): logo = logos_villes["bordeaux"]
-                 
+                
                 with col_img:
                     if logo: st.image(logo, width=25)
                     else: st.write("")
                 with col_chk:
-                    if st.checkbox(circo, key=f"chk_circo_{i}_v46"): choix_circo.append(circo)
+                    if st.checkbox(circo, key=f"chk_circo_{i}"): choix_circo.append(circo)
         if choix_circo: df = df[df["Circonscription"].isin(choix_circo)]
 
     if "Ecole" in df.columns:
@@ -227,7 +341,7 @@ if not df_raw.empty:
         choix_ecole = []
         with st.sidebar.expander("Écoles", expanded=False):
             for i, ecole in enumerate(ecoles_dispo):
-                if st.checkbox(ecole, key=f"chk_ecole_{i}_v46"): choix_ecole.append(ecole)
+                if st.checkbox(ecole, key=f"chk_ecole_{i}"): choix_ecole.append(ecole)
         if choix_ecole: df = df[df["Ecole"].isin(choix_ecole)]
 
     if "Classe" in df.columns:
@@ -239,10 +353,10 @@ if not df_raw.empty:
         choix_classe = []
         with st.sidebar.expander("Classes", expanded=False):
             for i, classe in enumerate(classes_dispo):
-                if st.checkbox(classe, key=f"chk_classe_{i}_v46"): choix_classe.append(classe)
+                if st.checkbox(classe, key=f"chk_classe_{i}"): choix_classe.append(classe)
         if choix_classe: df = df[df["Classe"].isin(choix_classe)]
 
-    # --- 5. DASHBOARD ---
+    # --- 6. DASHBOARD ---
 
     col_logo, col_titre = st.columns([1, 4])
     with col_logo:
@@ -258,9 +372,9 @@ if not df_raw.empty:
     st.markdown("---")
 
     col1, col2, col3 = st.columns(3)
-    if "Prénom" in df.columns: nb_eleves = df["Prénom"].notna().sum()
-    elif "Prenom" in df.columns: nb_eleves = df["Prenom"].notna().sum()
-    else: nb_eleves = len(df)
+    if "Classe" in df.columns:
+        nb_eleves = df["Classe"].replace(['nan', 'None', ''], pd.NA).dropna().count()
+    else: nb_eleves = 0
 
     if "Diplome" in df.columns:
         liste_valides = ["ASNS", "Pass Nautique", "Pass Nautique avec brassards"]
@@ -272,82 +386,51 @@ if not df_raw.empty:
     col3.metric("Diplômes Délivrés", nb_diplomes)
     st.markdown("---")
 
-    # --- CONFIGURATION DU TÉLÉCHARGEMENT IMAGE (HD) ---
     config_download = {
         'displayModeBar': True,
         'displaylogo': False,
         'modeBarButtonsToRemove': ['zoom', 'pan', 'select', 'lasso2d', 'autoScale2d'],
-        'toImageButtonOptions': {
-            'format': 'png',
-            'filename': 'graphique_ucpa',
-            'height': 800,
-            'width': 1200,
-            'scale': 2
-        }
+        'toImageButtonOptions': {'format': 'png', 'filename': 'graphique_ucpa', 'height': 800, 'width': 1200, 'scale': 2}
     }
 
-    # --- STYLES GRAPHIQUES ---
     def style_graph_standard(fig, height=None):
         fig.update_layout(
             font_family="Comfortaa", 
-            font_color="#4b4b96", 
-            title=None,
-            # Seule modification ici : le " " pour corriger le bug "undefined"
-            title_text=" ",
+            font_color="#4b4b96", title_text=" ",
             hoverlabel=dict(font=dict(family="Comfortaa"), bgcolor="white", bordercolor="#e9ecef"),
             margin=dict(l=20, r=20, t=30, b=20), hovermode="closest",
-            legend=dict(font=dict(color="#4b4b96")),
-            plot_bgcolor='white',
-            paper_bgcolor='white',
+            plot_bgcolor='white', paper_bgcolor='white',
         )
         fig.update_yaxes(showgrid=True, gridcolor='#f5f5f5', zeroline=False)
         fig.update_xaxes(showgrid=False, zeroline=False)
-         
         if height: fig.update_layout(height=height)
         return fig
 
     def style_gauge(fig, height=None):
         fig.update_layout(
-            font_family="Comfortaa", 
-            font_color="#4b4b96",
-            title=None,
+            font_family="Comfortaa", font_color="#4b4b96",
             margin=dict(l=25, r=25, t=30, b=10),
-            title_text="",
-            plot_bgcolor='white',
-            paper_bgcolor='white',
+            plot_bgcolor='white', paper_bgcolor='white',
         )
         if height: fig.update_layout(height=height)
         return fig
 
-    # --- CALCULS GLOBAUX ---
-    c_deb, c_fin, m_deb, m_fin = None, None, None, None
-    if len(df.columns) > 30:
-        c_deb, c_fin = df.columns[28], df.columns[30]
-        m_deb = round(pd.to_numeric(df[c_deb], errors='coerce').mean(), 1)
-        m_fin = round(pd.to_numeric(df[c_fin], errors='coerce').mean(), 1)
+    m_deb, m_fin = None, None
+    if c_deb in df.columns and c_fin in df.columns:
+        m_deb = round(df[c_deb].mean(), 1)
+        m_fin = round(df[c_fin].mean(), 1)
 
     # --- SECTION 1 ---
     g1, g2 = st.columns(2)
-
     with g1:
         st.markdown("<h3 style='text-align: center;'>Répartition des Diplômes</h3>", unsafe_allow_html=True)
         if "Diplome" in df.columns:
             df_dip = df.dropna(subset=["Diplome"])
             if not df_dip.empty:
-                color_map = {"ASNS": "#6d9eeb", "Pass Nautique": "#c27ba0", "Aucun test": "#e06666", 
-                             "Pass Nautique avec brassards": "#ead1dc", "Absent": "#cccccc"}
+                color_map = {"ASNS": "#6d9eeb", "Pass Nautique": "#c27ba0", "Aucun test": "#e06666", "Pass Nautique avec brassards": "#ead1dc", "Absent": "#cccccc"}
                 fig = px.pie(df_dip, names="Diplome", hole=0.4, color="Diplome", color_discrete_map=color_map)
-                 
-                fig.update_traces(
-                    textposition='inside', 
-                    textinfo='value+percent', 
-                    hovertemplate = "<b>%{label}</b><br>Nombre : %{value}<br>Part : %{percent}<extra></extra>",
-                    textfont=dict(color='#4b4b96')
-                )
-                 
-                fig = style_graph_standard(fig, height=350)
-                st.plotly_chart(fig, use_container_width=True, config=config_download)
-            else: st.info("Pas de données.")
+                fig.update_traces(textposition='inside', textinfo='value+percent', textfont=dict(color='#4b4b96'))
+                st.plotly_chart(style_graph_standard(fig, 350), use_container_width=True, config=config_download)
 
     with g2:
         st.markdown("<h3 style='text-align: center;'>Répartition par Classe</h3>", unsafe_allow_html=True)
@@ -356,261 +439,81 @@ if not df_raw.empty:
             df_cls = df_clean["Classe"].value_counts().reset_index()
             df_cls.columns = ["Classe", "Nombre"]
             df_cls["order"] = df_cls["Classe"].apply(cle_de_tri)
-            df_cls = df_cls.sort_values("order")
-             
-            fig = px.bar(df_cls, x="Classe", y="Nombre", text_auto=True, color="Classe", 
-                         color_discrete_sequence=px.colors.qualitative.Prism)
+            fig = px.bar(df_cls.sort_values("order"), x="Classe", y="Nombre", text_auto=True, color="Classe", color_discrete_sequence=px.colors.qualitative.Prism)
             fig.update_layout(showlegend=False)
-             
-            fig.update_traces(
-                hovertemplate="<b>%{x}</b><br>Nombre : %{y}<extra></extra>"
-            )
-             
-            fig = style_graph_standard(fig, height=350)
-            st.plotly_chart(fig, use_container_width=True, config=config_download)
+            st.plotly_chart(style_graph_standard(fig, 350), use_container_width=True, config=config_download)
 
     st.markdown("---")
 
-    # --- SECTION 2 (MODIFIÉE AVEC LES COULEURS ET ÉCHELLE 0,4,8,12) ---
+    # --- SECTION 2 ---
     c_pap, c_cls = st.columns(2)
-
     with c_pap:
         st.markdown("<h3 style='text-align: center;'>Glissement des Notes</h3>", unsafe_allow_html=True)
-        if len(df.columns) > 30:
+        if c_deb in df.columns and c_fin in df.columns:
             d_cnt = df[c_deb].value_counts().reindex(range(13), fill_value=0)
             f_cnt = df[c_fin].value_counts().reindex(range(13), fill_value=0)
-             
-            max_val = max(d_cnt.max(), f_cnt.max())
-            offset = max_val * 0.1 
-             
+            offset = max(d_cnt.max(), f_cnt.max()) * 0.1 
             fig = go.Figure()
-             
-            fig.add_trace(go.Bar(
-                y=d_cnt.index, 
-                x=d_cnt.values*-1, 
-                base=-offset, 
-                name='Début', 
-                orientation='h', 
-                marker_color='#adb5bd', 
-                text=d_cnt.values, 
-                textposition='auto', 
-                hovertemplate='<b>Début</b><br>Note: %{y}<br>Élèves: %{text}<extra></extra>'
-            ))
-             
-            fig.add_trace(go.Bar(
-                y=f_cnt.index, 
-                x=f_cnt.values, 
-                base=offset, 
-                name='Fin', 
-                orientation='h', 
-                marker_color='#00a896', 
-                text=f_cnt.values, 
-                textposition='auto', 
-                hovertemplate='<b>Fin</b><br>Note: %{y}<br>Élèves: %{text}<extra></extra>'
-            ))
-             
-            fig.add_trace(go.Scatter(
-                x=[0] * 13,
-                y=list(range(13)),
-                mode='text',
-                text=list(range(13)),
-                textfont=dict(color='#4b4b96', size=13, family="Comfortaa", weight="bold"),
-                marker=dict(opacity=0),
-                showlegend=False,
-                hoverinfo='skip'
-            ))
-             
-            fig.update_layout(
-                barmode='overlay', 
-                bargap=0.1, 
-                xaxis=dict(showticklabels=False, title="Nombre Élèves", showgrid=False, zeroline=False), 
-                yaxis=dict(showticklabels=False, showgrid=False, title=""),
-                legend=dict(orientation="h", y=1.1)
-            )
-             
-            fig = style_graph_standard(fig, height=400)
-            fig.update_yaxes(showgrid=False) 
-            fig.update_xaxes(showgrid=False)
-            st.plotly_chart(fig, use_container_width=True, config=config_download)
+            fig.add_trace(go.Bar(y=d_cnt.index, x=d_cnt.values*-1, base=-offset, name='Début', orientation='h', marker_color='#adb5bd', text=d_cnt.values, textposition='auto'))
+            fig.add_trace(go.Bar(y=f_cnt.index, x=f_cnt.values, base=offset, name='Fin', orientation='h', marker_color='#00a896', text=f_cnt.values, textposition='auto'))
+            fig.add_trace(go.Scatter(x=[0]*13, y=list(range(13)), mode='text', text=list(range(13)), textfont=dict(color='#4b4b96', size=13, family="Comfortaa", weight="bold"), hoverinfo='skip'))
+            fig.update_layout(barmode='overlay', bargap=0.1, xaxis=dict(showticklabels=False), yaxis=dict(showticklabels=False, dtick=1), legend=dict(orientation="h", y=1.1))
+            st.plotly_chart(style_graph_standard(fig, 400), use_container_width=True, config=config_download)
 
     with c_cls:
         st.markdown("<h3 style='text-align: center;'>Moyenne Globale</h3>", unsafe_allow_html=True)
         if pd.notna(m_deb) and pd.notna(m_fin):
             cj1, cj2 = st.columns(2)
+            steps = [{'range': [0, 4], 'color': "#bf9000"}, {'range': [4, 8], 'color': "#e1ddd7"}, {'range': [8, 12], 'color': "#f5dc1e"}, {'range': [12, 13], 'color': "#9fc5e8"}]
             with cj1:
-                # --- JAUGE DEBUT ---
-                fig_s = go.Figure(go.Indicator(
-                    mode="gauge+number", 
-                    value=m_deb, 
-                    title={'text': "Début", 'font': {'size': 14, 'family': 'Comfortaa', 'color': '#4b4b96'}},
-                    gauge={
-                        'axis': {
-                            'range': [None, 12.2], 
-                            'tickvals': [0, 4, 8, 12], # --- MODIFICATION ICI ---
-                            'tickfont': {'family': 'Comfortaa', 'color': '#4b4b96'}
-                        }, 
-                        'bar': {'color': "#4b4b96"}, 
-                        'steps': [
-                            {'range': [0, 4], 'color': "#bf9000"},
-                            {'range': [4, 8], 'color': "#e1ddd7"},
-                            {'range': [8, 12], 'color': "#f5dc1e"},
-                            {'range': [12, 13], 'color': "#9fc5e8"}
-                        ]
-                    }
-                ))
-                fig_s = style_gauge(fig_s, height=220)
-                st.plotly_chart(fig_s, use_container_width=True, config=config_download)
+                fig_s = go.Figure(go.Indicator(mode="gauge+number", value=m_deb, title={'text': "Début", 'font': {'size': 14}}, gauge={'axis': {'range': [None, 12.2], 'tickvals': [0, 4, 8, 12]}, 'bar': {'color': "#4b4b96"}, 'steps': steps}))
+                st.plotly_chart(style_gauge(fig_s, 220), use_container_width=True, config=config_download)
             with cj2:
-                # --- JAUGE FIN ---
-                fig_e = go.Figure(go.Indicator(
-                    mode="gauge+number+delta", 
-                    value=m_fin, 
-                    title={'text': "Fin", 'font': {'size': 14, 'family': 'Comfortaa', 'color': '#4b4b96'}},
-                    delta={'reference': m_deb, 'increasing': {'color': "#00a896"}},
-                    gauge={
-                        'axis': {
-                            'range': [None, 12.2], 
-                            'tickvals': [0, 4, 8, 12], # --- MODIFICATION ICI ---
-                            'tickfont': {'family': 'Comfortaa', 'color': '#4b4b96'}
-                        }, 
-                        'bar': {'color': "#4b4b96"}, 
-                        'steps': [
-                            {'range': [0, 4], 'color': "#bf9000"},
-                            {'range': [4, 8], 'color': "#e1ddd7"},
-                            {'range': [8, 12], 'color': "#f5dc1e"},
-                            {'range': [12, 13], 'color': "#9fc5e8"}
-                        ]
-                    }
-                ))
-                fig_e = style_gauge(fig_e, height=220)
-                st.plotly_chart(fig_e, use_container_width=True, config=config_download)
-        else: st.info("Données insuffisantes.")
+                fig_e = go.Figure(go.Indicator(mode="gauge+number+delta", value=m_fin, title={'text': "Fin", 'font': {'size': 14}}, delta={'reference': m_deb, 'increasing': {'color': "#00a896"}}, gauge={'axis': {'range': [None, 12.2], 'tickvals': [0, 4, 8, 12]}, 'bar': {'color': "#4b4b96"}, 'steps': steps}))
+                st.plotly_chart(style_gauge(fig_e, 220), use_container_width=True, config=config_download)
 
     st.markdown("---")
 
     # --- SECTION 3 : SCATTER PLOT ---
     st.markdown("<h3 style='text-align: center;'>Performance par École</h3>", unsafe_allow_html=True)
-    if "Ecole" in df.columns and len(df.columns) > 30:
+    if "Ecole" in df.columns and c_deb in df.columns and c_fin in df.columns:
         df_eco = df.groupby("Ecole").agg({c_deb: 'mean', c_fin: 'mean', df.columns[0]: 'count'}).reset_index()
         df_eco.columns = ["Ecole", "Moy_Deb", "Moy_Fin", "Nb_Eleves"]
-         
-        df_eco["Moy_Deb"] = df_eco["Moy_Deb"].round(1)
-        df_eco["Moy_Fin"] = df_eco["Moy_Fin"].round(1)
         df_eco["Progression"] = (df_eco["Moy_Fin"] - df_eco["Moy_Deb"]).round(1)
-         
-        x_min, x_max = df_eco["Moy_Deb"].min(), df_eco["Moy_Deb"].max()
-        y_min, y_max = df_eco["Moy_Fin"].min(), df_eco["Moy_Fin"].max()
-        pad = 0.5 
-         
-        fig = px.scatter(df_eco, x="Moy_Deb", y="Moy_Fin", size="Nb_Eleves", color="Ecole", 
-                         text="Ecole", 
-                         hover_name="Ecole", 
-                         color_discrete_sequence=px.colors.qualitative.Vivid,
-                         custom_data=["Moy_Deb", "Moy_Fin", "Progression", "Nb_Eleves"])
-         
-        fig.update_layout(
-            xaxis_range=[x_min - pad, x_max + pad], 
-            yaxis_range=[y_min - pad, y_max + pad],
-            xaxis_title="Moyenne Début", yaxis_title="Moyenne Fin",
-            showlegend=False,
-            title_text=""
-        )
-         
-        fig.update_traces(
-            textposition='top center',
-            hovertemplate="<b>%{hovertext}</b><br><br>" +
-            "Début : %{customdata[0]:.1f}<br>" +
-            "Fin : %{customdata[1]:.1f}<br>" +
-            "Progression : %{customdata[2]:+.1f}<br>" + 
-            "Élèves : %{customdata[3]}<extra></extra>"
-        )
-         
-        fig = style_graph_standard(fig, height=550)
-        fig.update_xaxes(showgrid=True, gridcolor='#f5f5f5')
-        fig.update_yaxes(showgrid=True, gridcolor='#f5f5f5')
-         
-        st.plotly_chart(fig, use_container_width=True, config=config_download)
+        fig = px.scatter(df_eco, x="Moy_Deb", y="Moy_Fin", size="Nb_Eleves", color="Ecole", text="Ecole", hover_name="Ecole", color_discrete_sequence=px.colors.qualitative.Vivid, custom_data=["Moy_Deb", "Moy_Fin", "Progression", "Nb_Eleves"])
+        fig.update_layout(xaxis_title="Moyenne Début", yaxis_title="Moyenne Fin", showlegend=False)
+        fig.update_traces(textposition='top center')
+        st.plotly_chart(style_graph_standard(fig, 550), use_container_width=True, config=config_download)
 
-    # --- SECTION 4 : ANALYSES CLASSE & ANNÉE (BARRES GROUPÉES) ---
+    # --- SECTION 4 : ANALYSES CLASSE & ANNÉE ---
     st.markdown("---")
     st.markdown("<h3 style='text-align: center; color: #00a896;'>Analyses Comparatives : Classe & Année</h3>", unsafe_allow_html=True)
     st.markdown("") 
 
-    if "Classe" in df.columns and "Saison" in df.columns:
+    if "Classe" in df.columns and "Saison" in df.columns and c_deb in df.columns and c_fin in df.columns:
         df_group = df[~df["Classe"].astype(str).str.lower().isin(['nul', 'nan', 'none', ''])].groupby(["Classe", "Saison"])[[c_deb, c_fin]].mean().reset_index()
-         
-        df_group[c_deb] = df_group[c_deb].round(1)
-        df_group[c_fin] = df_group[c_fin].round(1)
-         
         df_group["order"] = df_group["Classe"].apply(cle_de_tri)
         df_group = df_group.sort_values(["order", "Saison"])
-         
-        # TRI CHRONOLOGIQUE FORCÉ
         saisons_triees = sorted(df_group["Saison"].unique())
          
         ca1, ca2 = st.columns(2)
-         
-        # --- GRAPHIQUE GAUCHE : NIVEAU DÉBUT ---
         with ca1:
             st.markdown("<h4 style='text-align: center;'>Niveau Début</h4>", unsafe_allow_html=True)
-            fig_deb = px.bar(
-                df_group, 
-                x="Classe", 
-                y=c_deb, 
-                color="Saison", 
-                barmode="group",
-                text_auto=True,
-                color_discrete_sequence=px.colors.qualitative.Pastel,
-                category_orders={"Saison": saisons_triees}
-            )
-            # ICI : Forçage horizontal et infobulle propre
-            fig_deb.update_traces(
-                textangle=0, 
-                textposition='outside',
-                hovertemplate="<b>%{x}</b><br>Année : %{fullData.name}<br>Note : %{y}<extra></extra>"
-            )
-             
+            fig_deb = px.bar(df_group, x="Classe", y=c_deb, color="Saison", barmode="group", text_auto=True, color_discrete_sequence=px.colors.qualitative.Pastel, category_orders={"Saison": saisons_triees})
+            fig_deb.update_traces(textangle=0, textposition='outside')
             fig_deb.update_layout(yaxis_title="Note Moyenne", yaxis_range=[0, 13])
-            fig_deb = style_graph_standard(fig_deb, height=500)
-            st.plotly_chart(fig_deb, use_container_width=True, config=config_download)
+            st.plotly_chart(style_graph_standard(fig_deb, 500), use_container_width=True, config=config_download)
              
-        # --- GRAPHIQUE DROITE : NIVEAU FIN ---
         with ca2:
             st.markdown("<h4 style='text-align: center;'>Niveau Fin</h4>", unsafe_allow_html=True)
-            fig_fin = px.bar(
-                df_group, 
-                x="Classe", 
-                y=c_fin, 
-                color="Saison", 
-                barmode="group",
-                text_auto=True,
-                color_discrete_sequence=px.colors.qualitative.Pastel,
-                category_orders={"Saison": saisons_triees}
-            )
-            # ICI : Forçage horizontal et infobulle propre
-            fig_fin.update_traces(
-                textangle=0, 
-                textposition='outside',
-                hovertemplate="<b>%{x}</b><br>Année : %{fullData.name}<br>Note : %{y}<extra></extra>"
-            )
-             
+            fig_fin = px.bar(df_group, x="Classe", y=c_fin, color="Saison", barmode="group", text_auto=True, color_discrete_sequence=px.colors.qualitative.Pastel, category_orders={"Saison": saisons_triees})
+            fig_fin.update_traces(textangle=0, textposition='outside')
             fig_fin.update_layout(yaxis_title="Note Moyenne", yaxis_range=[0, 13])
-            fig_fin = style_graph_standard(fig_fin, height=500)
-            st.plotly_chart(fig_fin, use_container_width=True, config=config_download)
-             
-    else:
-        st.info("Données insuffisantes pour l'analyse par année.")
+            st.plotly_chart(style_graph_standard(fig_fin, 500), use_container_width=True, config=config_download)
+    else: st.info("Données insuffisantes pour l'analyse par année.")
 
     # --- PIED DE PAGE ---
     st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; color: #4b4b96; font-family: "Comfortaa"; padding-top: 20px; font-size: 0.8rem; opacity: 0.8;'>
-            © 2025 UCPA Aqua Stadium - Document destiné aux services de la Ville et de l'Éducation Nationale
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("<div style='text-align: center; color: #4b4b96; font-family: \"Comfortaa\"; font-size: 0.8rem; opacity: 0.8;'>© 2026 UCPA Aqua Stadium</div>", unsafe_allow_html=True)
 
-else:
-    st.info("Chargement...")
+else: st.info("Chargement des données en cours...")
