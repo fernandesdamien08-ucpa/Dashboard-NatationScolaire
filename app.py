@@ -105,7 +105,7 @@ def check_password():
         pwd = st.text_input("Mot de passe", type="password", label_visibility="collapsed", placeholder="Saisissez votre mot de passe...")
         
         if st.button("ENTRER", use_container_width=True):
-            if pwd == "Aqua2025":  # 👇 Le mot de passe est ici
+            if pwd == "ScolairesUCPA2026":  # 👇 Le mot de passe est ici
                 st.session_state["password_correct"] = True
                 st.rerun() # Recharge la page en autorisant l'accès
             else:
