@@ -284,31 +284,50 @@ if not df_raw.empty:
         df[c_fin] = pd.to_numeric(df[c_fin], errors='coerce')
 
     if "Année scolaire" in df.columns:
-        # --- NOUVEAU FILTRE ANTI-NAN ROBUSTE ---
-        mots_interdits = ['nan', 'none', 'nul', '', '<na>']
-        df = df[~df["Année scolaire"].astype(str).str.lower().str.strip().isin(mots_interdits)]
-        
         def format_saison(valeur):
+            # Transformation en minuscule et suppression des espaces pour comparer proprement
+            val_str = str(valeur).strip().lower()
+            
+            # --- LE BULLDOZER ANTI-NAN EST ICI ---
+            if val_str in ['nan', 'none', 'nul', '', '<na>']:
+                return "Invalide"
+                
             try:
                 annee = int(float(valeur))
                 return f"{annee}-{annee + 1}"
             except:
                 return str(valeur)
+                
         df["Saison"] = df["Année scolaire"].apply(format_saison)
+        
+        # SUPPRESSION RADICALE : on détruit les lignes identifiées comme invalides (lignes vides du sheets)
+        df = df[df["Saison"] != "Invalide"]
     else:
         df["Saison"] = "Inconnue"
 
     # --- 5. FILTRES ---
     st.sidebar.header("Filtres")
 
+    # Double sécurité : une fonction pour nettoyer TOUS les filtres restants
     def get_unique_sorted(series):
-        return sorted(list(set(series.dropna().unique())), reverse=False)
+        raw_vals = series.dropna().unique()
+        clean_vals = []
+        for val in raw_vals:
+            val_str = str(val).strip()
+            if val_str.lower() not in ['nan', 'none', 'nul', '', '<na>', 'invalide']:
+                clean_vals.append(val_str)
+        return sorted(list(set(clean_vals)))
 
     choix_annees = []
     if "Saison" in df.columns:
         st.sidebar.subheader("Année Scolaire")
-        annees_dispo = sorted(list(set(df["Saison"].unique())), reverse=True)
+        
+        # On s'assure que 'nan' ne peut physiquement plus être listé
+        annees_propres = [str(a).strip() for a in df["Saison"].unique() if str(a).strip().lower() not in ['nan', 'none', 'nul', '', '<na>']]
+        annees_dispo = sorted(list(set(annees_propres)), reverse=True)
+        
         for i, annee in enumerate(annees_dispo):
+            # Coche automatiquement uniquement la première vraie année
             if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}"):
                 choix_annees.append(annee)
         if choix_annees: df = df[df["Saison"].isin(choix_annees)]
@@ -347,11 +366,10 @@ if not df_raw.empty:
         if choix_ecole: df = df[df["Ecole"].isin(choix_ecole)]
 
     if "Classe" in df.columns:
-        classes_brutes = get_unique_sorted(df["Classe"])
-        classes_propres = [c for c in classes_brutes if str(c).lower() not in ['nul', 'nan', 'none', '']]
+        classes_dispo_brutes = get_unique_sorted(df["Classe"])
         ordre_classes = ["MS", "GS", "CP", "CE1", "CE2", "CM1", "CM2"]
         def cle_de_tri(val): return ordre_classes.index(val) if val in ordre_classes else 99
-        classes_dispo = sorted(classes_propres, key=lambda x: (cle_de_tri(x), x))
+        classes_dispo = sorted(classes_dispo_brutes, key=lambda x: (cle_de_tri(x), x))
         choix_classe = []
         with st.sidebar.expander("Classes", expanded=False):
             for i, classe in enumerate(classes_dispo):
