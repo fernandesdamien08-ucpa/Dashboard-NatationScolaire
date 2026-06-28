@@ -590,34 +590,90 @@ if not df_raw.empty:
 
     st.markdown("---")
 
-    # ==========================================
+  # ==========================================
     # --- SECTION 3 : SCATTER PLOT ---
     # ==========================================
     st.markdown("<h3 style='text-align: center;'>Performance par École</h3>", unsafe_allow_html=True)
     if "Ecole" in df.columns and c_deb in df.columns and c_fin in df.columns:
-        df_eco = df.groupby("Ecole").agg({c_deb: 'mean', c_fin: 'mean', df.columns[0]: 'count'}).reset_index()
-        df_eco.columns = ["Ecole", "Moy_Deb", "Moy_Fin", "Nb_Eleves"]
         
-        df_eco["Progression"] = df_eco["Moy_Fin"] - df_eco["Moy_Deb"] 
+        # Texte détaillé de l'info-bulle mis à jour avec "Moyenne Tronquée"
+        help_text = """
+* **Moyenne :** Le calcul classique (somme des notes divisée par l'effectif). *Attention : très sensible aux valeurs extrêmes (ex: un seul 0/12 fait chuter la moyenne globale).*
+* **Médiane :** La note de l'élève qui se situe exactement au "milieu" du classement. *Elle représente le niveau de la majority de la classe et n'est pas impactée par les notes extrêmes.*
+* **Moyenne Tronquée :** Le compromis idéal. On retire un pourcentage paramétrable des pires et des meilleures notes, puis on calcule la moyenne. *Permet d'exclure les "accidents" tout en gardant une moyenne très représentative du cœur de la classe.*
+"""
+
+        # On crée deux colonnes pour aligner le bouton radio et le curseur
+        col_opt1, col_opt2 = st.columns([2, 1])
         
-        df_eco["Moy_Deb_txt"] = df_eco["Moy_Deb"].apply(lambda x: f"{x:.2f}")
-        df_eco["Moy_Fin_txt"] = df_eco["Moy_Fin"].apply(lambda x: f"{x:.2f}")
+        with col_opt1:
+            choix_indic = st.radio(
+                "Type de calcul :",
+                options=["Moyenne", "Médiane", "Moyenne Tronquée"],
+                index=0,
+                horizontal=True,
+                help=help_text 
+            )
+            
+        # Valeur par défaut si on n'est pas sur la moyenne tronquée
+        trim_pct = 0.10 
+        
+        # Le curseur n'apparaît QUE si on choisit "Moyenne Tronquée"
+        if choix_indic == "Moyenne Tronquée":
+            with col_opt2:
+                # Curseur allant de 5% à 40%, par tranches de 5%
+                val_slider = st.slider("Bords à exclure (%) :", min_value=5, max_value=40, step=5, value=10)
+                trim_pct = val_slider / 100.0
+            
+        # 1. Fonction sur-mesure pour la moyenne tronquée utilisant le pourcentage du curseur
+        def calc_tronquee(x):
+            s = x.dropna().sort_values()
+            n = len(s)
+            k = int(n * trim_pct) # On calcule combien d'élèves retirer de chaque côté
+            # S'il y a trop peu d'élèves, on fait une moyenne normale par sécurité
+            if n <= 2 * k or k == 0: 
+                return s.mean()
+            return s.iloc[k:-k].mean()
+            
+        # 2. Attribution de la méthode et des labels selon le bouton
+        if choix_indic == "Moyenne":
+            methode = 'mean'
+            label_axe = "Moyenne"
+        elif choix_indic == "Médiane":
+            methode = 'median'
+            label_axe = "Médiane"
+        else:
+            methode = calc_tronquee
+            # Le texte s'adapte en direct au pourcentage choisi sur le curseur !
+            label_axe = f"Moy. Tronquée ({int(trim_pct*100)}%)" 
+            
+        df_eco = df.groupby("Ecole").agg({c_deb: methode, c_fin: methode, df.columns[0]: 'count'}).reset_index()
+        df_eco.columns = ["Ecole", "Score_Deb", "Score_Fin", "Nb_Eleves"]
+        
+        df_eco["Progression"] = df_eco["Score_Fin"] - df_eco["Score_Deb"] 
+        
+        df_eco["Score_Deb_txt"] = df_eco["Score_Deb"].apply(lambda x: f"{x:.2f}")
+        df_eco["Score_Fin_txt"] = df_eco["Score_Fin"].apply(lambda x: f"{x:.2f}")
         df_eco["Progression_txt"] = df_eco["Progression"].apply(lambda x: f"{x:+.2f}")
         df_eco["Nb_Eleves_txt"] = df_eco["Nb_Eleves"].astype(str)
         
         fig = px.scatter(
             df_eco, 
-            x="Moy_Deb", 
-            y="Moy_Fin", 
+            x="Score_Deb", 
+            y="Score_Fin", 
             size="Nb_Eleves", 
-            color="Ecole", 
+            color="Ecole",           
             text="Ecole", 
             hover_name="Ecole", 
             color_discrete_sequence=px.colors.qualitative.Vivid, 
-            custom_data=["Moy_Deb_txt", "Moy_Fin_txt", "Progression_txt", "Nb_Eleves_txt"]
+            custom_data=["Score_Deb_txt", "Score_Fin_txt", "Progression_txt", "Nb_Eleves_txt"]
         )
         
-        fig.update_layout(xaxis_title="Moyenne Début", yaxis_title="Moyenne Fin", showlegend=False)
+        fig.update_layout(
+            xaxis_title=f"{label_axe} Début", 
+            yaxis_title=f"{label_axe} Fin", 
+            showlegend=False
+        )
         
         fig.update_traces(
             textposition='top center',
@@ -627,8 +683,8 @@ if not df_raw.empty:
                 line=dict(width=1, color='white') 
             ),
             hovertemplate="<b>%{hovertext}</b><br><br>" +
-                          "Moyenne Début : %{customdata[0]}<br>" +
-                          "Moyenne Fin : %{customdata[1]}<br>" +
+                          f"{label_axe} Début : %{{customdata[0]}}<br>" +
+                          f"{label_axe} Fin : %{{customdata[1]}}<br>" +
                           "Progression : %{customdata[2]} pts<br>" +
                           "Effectif : %{customdata[3]} élèves<extra></extra>"
         )
