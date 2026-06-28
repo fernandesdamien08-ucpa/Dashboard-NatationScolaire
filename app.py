@@ -105,7 +105,7 @@ def check_password():
         pwd = st.text_input("Mot de passe", type="password", label_visibility="collapsed", placeholder="Saisissez votre mot de passe...")
         
         if st.button("ENTRER", use_container_width=True):
-            if pwd == "ScolairesUCPA2026":  # 👇 Le mot de passe est ici
+            if pwd == "Aqua2025":  # 👇 Le mot de passe est ici
                 st.session_state["password_correct"] = True
                 st.rerun() # Recharge la page en autorisant l'accès
             else:
@@ -257,7 +257,7 @@ def load_data():
         if len(cols) > 9:
             cols[0] = "Année scolaire"
             cols[2] = "Circonscription" 
-            cols[4] = "Ecole"           
+            cols[4] = "Ecole"            
             cols[5] = "Classe"          
             cols[6] = "Diplome"         # Ancien 21, maintenant 6
             cols[7] = "Note Début"      # Ancien 26, maintenant 7
@@ -304,7 +304,7 @@ if not df_raw.empty:
     else:
         df["Saison"] = "Inconnue"
 
-    # --- 5. FILTRES ---
+   # --- 5. FILTRES ---
     st.sidebar.header("Filtres")
 
     def get_unique_sorted(series):
@@ -323,7 +323,7 @@ if not df_raw.empty:
         annees_dispo = sorted(list(set(annees_propres)), reverse=True)
         
         for i, annee in enumerate(annees_dispo):
-            if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{i}"):
+            if st.sidebar.checkbox(annee, value=(i==0), key=f"chk_annee_{annee}"):
                 choix_annees.append(annee)
         if choix_annees: df = df[df["Saison"].isin(choix_annees)]
 
@@ -335,7 +335,7 @@ if not df_raw.empty:
         logos_villes = {
             "mérignac": "https://media.licdn.com/dms/image/v2/C4D0BAQHH-t_ZsrR0oQ/company-logo_200_200/company-logo_200_200/0/1631330164292?e=2147483647&v=beta&t=yRIRvQPqQGDJRQeCquZpVT0UZ12pLrdJtV4n3z3GM5A",
             "martignas": "https://www.pagesjaunes.fr/media/agc/68/2f/30/00/00/36/00/04/50/f0/6622682f30000036000450f0/662268313000005a700450f3.png",
-            "bordeaux": "https://upload.wikimedia.org/wikipedia/fr/thumb/5/5f/Ville_de_Bordeaux_%28logo%29.svg/1015px-Ville_de_Bordeaux_%28logo%29.svg.png"
+            "bordeaux": "https://upload.wikimedia.org/wikipedia/fr/5/5f/Ville_de_Bordeaux_%28logo%29.svg"
         }
         with st.sidebar.expander("Circonscriptions", expanded=False):
             for i, circo in enumerate(circo_dispo):
@@ -349,7 +349,7 @@ if not df_raw.empty:
                     if logo: st.image(logo, width=25)
                     else: st.write("")
                 with col_chk:
-                    if st.checkbox(circo, key=f"chk_circo_{i}"): choix_circo.append(circo)
+                    if st.checkbox(circo, key=f"chk_circo_{circo}"): choix_circo.append(circo)
         if choix_circo: df = df[df["Circonscription"].isin(choix_circo)]
 
     if "Ecole" in df.columns:
@@ -357,7 +357,7 @@ if not df_raw.empty:
         choix_ecole = []
         with st.sidebar.expander("Écoles", expanded=False):
             for i, ecole in enumerate(ecoles_dispo):
-                if st.checkbox(ecole, key=f"chk_ecole_{i}"): choix_ecole.append(ecole)
+                if st.checkbox(ecole, key=f"chk_ecole_{ecole}"): choix_ecole.append(ecole)
         if choix_ecole: df = df[df["Ecole"].isin(choix_ecole)]
 
     if "Classe" in df.columns:
@@ -368,7 +368,7 @@ if not df_raw.empty:
         choix_classe = []
         with st.sidebar.expander("Classes", expanded=False):
             for i, classe in enumerate(classes_dispo):
-                if st.checkbox(classe, key=f"chk_classe_{i}"): choix_classe.append(classe)
+                if st.checkbox(classe, key=f"chk_classe_{classe}"): choix_classe.append(classe)
         if choix_classe: df = df[df["Classe"].isin(choix_classe)]
 
     # --- 6. DASHBOARD ---
@@ -435,16 +435,27 @@ if not df_raw.empty:
         m_deb = round(df[c_deb].mean(), 1)
         m_fin = round(df[c_fin].mean(), 1)
 
-    # --- SECTION 1 ---
+   # ==========================================
+    # --- SECTION 1 : RÉPARTITION ---
+    # ==========================================
     g1, g2 = st.columns(2)
     with g1:
         st.markdown("<h3 style='text-align: center;'>Répartition des Diplômes</h3>", unsafe_allow_html=True)
         if "Diplome" in df.columns:
             df_dip = df.dropna(subset=["Diplome"])
             if not df_dip.empty:
-                color_map = {"ASNS": "#6d9eeb", "Pass Nautique": "#c27ba0", "Aucun test": "#e06666", "Pass Nautique avec brassards": "#ead1dc", "Absent": "#cccccc"}
+                # Ajout de "Test échoué" à la palette de couleurs
+                color_map = {"ASNS": "#6d9eeb", "Pass Nautique": "#c27ba0", "Aucun test": "#e06666", "Pass Nautique avec brassards": "#ead1dc", "Absent": "#cccccc", "Test échoué": "#82e0aa"}
                 fig = px.pie(df_dip, names="Diplome", hole=0.4, color="Diplome", color_discrete_map=color_map)
-                fig.update_traces(textposition='inside', textinfo='value+percent', textfont=dict(color='#4b4b96'))
+                
+                # --- CORRECTION DE LA BULLE DE SURVOL ---
+                fig.update_traces(
+                    textposition='inside', 
+                    textinfo='value+percent', 
+                    textfont=dict(color='#4b4b96'),
+                    hovertemplate="<b>%{label}</b><br>Effectif : %{value} élèves<extra></extra>"
+                )
+                
                 st.plotly_chart(style_graph_standard(fig, 350), use_container_width=True, config=config_download)
 
     with g2:
@@ -456,11 +467,76 @@ if not df_raw.empty:
             df_cls["order"] = df_cls["Classe"].apply(cle_de_tri)
             fig = px.bar(df_cls.sort_values("order"), x="Classe", y="Nombre", text_auto=True, color="Classe", color_discrete_sequence=px.colors.qualitative.Prism)
             fig.update_layout(showlegend=False)
+            
+            # --- CORRECTION DE LA BULLE DE SURVOL ---
+            fig.update_traces(
+                hovertemplate="<b>Classe %{x}</b><br>Effectif : %{y} élèves<extra></extra>"
+            )
+            
             st.plotly_chart(style_graph_standard(fig, 350), use_container_width=True, config=config_download)
 
     st.markdown("---")
 
-    # --- SECTION 2 ---
+   # ==========================================
+    # --- NOUVELLE SECTION : ÉVOLUTION ---
+    # ==========================================
+    st.markdown("<h3 style='text-align: center; color: #00a896;'>Évolution de la Répartition des Diplômes</h3>", unsafe_allow_html=True)
+    st.markdown("") 
+
+    if "Diplome" in df.columns and "Saison" in df.columns:
+        df_dip_evo = df.dropna(subset=["Diplome", "Saison"])
+        df_dip_evo = df_dip_evo[df_dip_evo["Saison"] != "Inconnue"]
+        
+        df_evo_counts = df_dip_evo.groupby(["Saison", "Diplome"]).size().reset_index(name="Nombre")
+        saisons_triees = sorted(df_evo_counts["Saison"].unique())
+
+        color_map = {
+            "ASNS": "#6d9eeb", 
+            "Pass Nautique": "#c27ba0", 
+            "Aucun test": "#e06666", 
+            "Pass Nautique avec brassards": "#ead1dc", 
+            "Absent": "#cccccc",
+            "Test échoué": "#82e0aa" 
+        }
+
+        fig_evo = px.line(
+            df_evo_counts, 
+            x="Saison", 
+            y="Nombre", 
+            color="Diplome", 
+            text="Nombre",      
+            markers=True,       
+            color_discrete_map=color_map,
+            category_orders={"Saison": saisons_triees},
+            # 👈 AJOUT : On donne le nom du diplôme à Plotly pour l'étiquette
+            custom_data=["Diplome"] 
+        )
+
+        fig_evo.update_traces(
+            textposition='top center', 
+            line=dict(width=3),     
+            marker=dict(size=8),
+            # 👈 AJOUT : Le template propre sans le "="
+            hovertemplate="<b>%{customdata[0]}</b><br>Année : %{x}<br>Effectif : %{y} élèves<extra></extra>"
+        )
+        
+        fig_evo.update_layout(
+            xaxis_title="Année Scolaire", 
+            yaxis_title="Nombre d'élèves",
+            legend_title_text="Type de diplôme",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
+        
+        st.plotly_chart(style_graph_standard(fig_evo, 500), use_container_width=True, config=config_download)
+    else:
+        st.info("Données insuffisantes pour l'analyse temporelle des diplômes.")
+
+    st.markdown("---")
+
+
+    # ==========================================
+    # --- SECTION 2 : GLISSEMENT DES NOTES ---
+    # ==========================================
     c_pap, c_cls = st.columns(2)
     with c_pap:
         st.markdown("<h3 style='text-align: center;'>Glissement des Notes</h3>", unsafe_allow_html=True)
@@ -469,9 +545,34 @@ if not df_raw.empty:
             f_cnt = df[c_fin].value_counts().reindex(range(13), fill_value=0)
             offset = max(d_cnt.max(), f_cnt.max()) * 0.1 
             fig = go.Figure()
-            fig.add_trace(go.Bar(y=d_cnt.index, x=d_cnt.values*-1, base=-offset, name='Début', orientation='h', marker_color='#adb5bd', text=d_cnt.values, textposition='auto'))
-            fig.add_trace(go.Bar(y=f_cnt.index, x=f_cnt.values, base=offset, name='Fin', orientation='h', marker_color='#00a896', text=f_cnt.values, textposition='auto'))
-            fig.add_trace(go.Scatter(x=[0]*13, y=list(range(13)), mode='text', text=list(range(13)), textfont=dict(color='#4b4b96', size=13, family="Comfortaa", weight="bold"), hoverinfo='skip'))
+            
+            fig.add_trace(go.Bar(
+                y=d_cnt.index, 
+                x=d_cnt.values*-1, 
+                base=-offset, 
+                name='Début', 
+                orientation='h', 
+                marker_color='#adb5bd', 
+                text=d_cnt.values, 
+                textposition='auto',
+                customdata=d_cnt.values, 
+                hovertemplate="<b>Note : %{y}</b><br>Effectif : %{customdata} élèves<extra></extra>"
+            ))
+            
+            fig.add_trace(go.Bar(
+                y=f_cnt.index, 
+                x=f_cnt.values, 
+                base=offset, 
+                name='Fin', 
+                orientation='h', 
+                marker_color='#00a896', 
+                text=f_cnt.values, 
+                textposition='auto',
+                customdata=f_cnt.values, 
+                hovertemplate="<b>Note : %{y}</b><br>Effectif : %{customdata} élèves<extra></extra>"
+            ))
+            
+            fig.add_trace(go.Scatter(x=[0]*13, y=list(range(13)), mode='text', text=list(range(13)), textfont=dict(color='#4b4b96', size=13, family="Comfortaa", weight="bold"), hoverinfo='skip', showlegend=False))
             fig.update_layout(barmode='overlay', bargap=0.1, xaxis=dict(showticklabels=False), yaxis=dict(showticklabels=False, dtick=1), legend=dict(orientation="h", y=1.1))
             st.plotly_chart(style_graph_standard(fig, 400), use_container_width=True, config=config_download)
 
@@ -489,25 +590,61 @@ if not df_raw.empty:
 
     st.markdown("---")
 
+    # ==========================================
     # --- SECTION 3 : SCATTER PLOT ---
+    # ==========================================
     st.markdown("<h3 style='text-align: center;'>Performance par École</h3>", unsafe_allow_html=True)
     if "Ecole" in df.columns and c_deb in df.columns and c_fin in df.columns:
         df_eco = df.groupby("Ecole").agg({c_deb: 'mean', c_fin: 'mean', df.columns[0]: 'count'}).reset_index()
         df_eco.columns = ["Ecole", "Moy_Deb", "Moy_Fin", "Nb_Eleves"]
-        df_eco["Progression"] = (df_eco["Moy_Fin"] - df_eco["Moy_Deb"]).round(1)
-        fig = px.scatter(df_eco, x="Moy_Deb", y="Moy_Fin", size="Nb_Eleves", color="Ecole", text="Ecole", hover_name="Ecole", color_discrete_sequence=px.colors.qualitative.Vivid, custom_data=["Moy_Deb", "Moy_Fin", "Progression", "Nb_Eleves"])
+        
+        df_eco["Progression"] = df_eco["Moy_Fin"] - df_eco["Moy_Deb"] 
+        
+        df_eco["Moy_Deb_txt"] = df_eco["Moy_Deb"].apply(lambda x: f"{x:.2f}")
+        df_eco["Moy_Fin_txt"] = df_eco["Moy_Fin"].apply(lambda x: f"{x:.2f}")
+        df_eco["Progression_txt"] = df_eco["Progression"].apply(lambda x: f"{x:+.2f}")
+        df_eco["Nb_Eleves_txt"] = df_eco["Nb_Eleves"].astype(str)
+        
+        fig = px.scatter(
+            df_eco, 
+            x="Moy_Deb", 
+            y="Moy_Fin", 
+            size="Nb_Eleves", 
+            color="Ecole", 
+            text="Ecole", 
+            hover_name="Ecole", 
+            color_discrete_sequence=px.colors.qualitative.Vivid, 
+            custom_data=["Moy_Deb_txt", "Moy_Fin_txt", "Progression_txt", "Nb_Eleves_txt"]
+        )
+        
         fig.update_layout(xaxis_title="Moyenne Début", yaxis_title="Moyenne Fin", showlegend=False)
-        fig.update_traces(textposition='top center')
+        
+        fig.update_traces(
+            textposition='top center',
+            textfont=dict(size=9), 
+            marker=dict(
+                opacity=0.8, 
+                line=dict(width=1, color='white') 
+            ),
+            hovertemplate="<b>%{hovertext}</b><br><br>" +
+                          "Moyenne Début : %{customdata[0]}<br>" +
+                          "Moyenne Fin : %{customdata[1]}<br>" +
+                          "Progression : %{customdata[2]} pts<br>" +
+                          "Effectif : %{customdata[3]} élèves<extra></extra>"
+        )
+        
         st.plotly_chart(style_graph_standard(fig, 550), use_container_width=True, config=config_download)
 
-    # --- SECTION 4 : ANALYSES CLASSE & ANNÉE ---
     st.markdown("---")
+
+    # ==========================================
+    # --- SECTION 4 : ANALYSES CLASSE & ANNÉE ---
+    # ==========================================
     st.markdown("<h3 style='text-align: center; color: #00a896;'>Analyses Comparatives : Classe & Année</h3>", unsafe_allow_html=True)
     st.markdown("") 
 
     if "Classe" in df.columns and "Saison" in df.columns and c_deb in df.columns and c_fin in df.columns:
         
-        # Calcul de la moyenne ET du compte des élèves
         df_valid_classes = df[~df["Classe"].astype(str).str.lower().isin(['nul', 'nan', 'none', ''])]
         
         df_group = df_valid_classes.groupby(["Classe", "Saison"]).agg(
@@ -517,7 +654,6 @@ if not df_raw.empty:
             Nb_Fin=(c_fin, 'count')
         ).reset_index()
         
-        # On remet les noms originaux pour la compatibilité avec Plotly
         df_group[c_deb] = df_group["Moy_Deb"].round(1)
         df_group[c_fin] = df_group["Moy_Fin"].round(1)
 
@@ -555,10 +691,12 @@ if not df_raw.empty:
             )
             fig_fin.update_layout(yaxis_title="Note Moyenne", yaxis_range=[0, 13])
             st.plotly_chart(style_graph_standard(fig_fin, 500), use_container_width=True, config=config_download)
-    else: st.info("Données insuffisantes pour l'analyse par année.")
+    else: 
+        st.info("Données insuffisantes pour l'analyse par année.")
 
     # --- PIED DE PAGE ---
     st.markdown("---")
     st.markdown("<div style='text-align: center; color: #4b4b96; font-family: \"Comfortaa\"; font-size: 0.8rem; opacity: 0.8;'>© 2026 UCPA Aqua Stadium</div>", unsafe_allow_html=True)
 
-else: st.info("Chargement des données en cours...")
+else: 
+    st.info("Chargement des données en cours...")
