@@ -134,7 +134,9 @@ def load_data():
         st.error(f"Erreur de lecture du fichier : {e}")
         return pd.DataFrame()
 
-df_raw = load_data()
+# Indicateur de chargement visible
+with st.spinner("Connexion au document de suivi en cours..."):
+    df_raw = load_data()
 
 if not df_raw.empty:
     # --- 4. PRÉPARATION ---
@@ -158,7 +160,7 @@ if not df_raw.empty:
     else:
         df["Saison"] = "Inconnue"
 
-   # --- 5. FILTRES ---
+    # --- 5. FILTRES ---
     st.sidebar.header("Filtres")
     def get_unique_sorted(series):
         raw_vals = series.dropna().unique()
@@ -303,7 +305,7 @@ if not df_raw.empty:
     else: st.info("Données insuffisantes pour l'analyse temporelle des diplômes.")
     st.markdown("---")
 
-# ==========================================
+    # ==========================================
     # --- SECTION COMBINÉE : DIPLÔMES & NIVEAU FINAL ---
     # ==========================================
     st.markdown("<h3 style='text-align: center; color: #00a896;'>Répartition des Diplômes & Niveau Final</h3>", unsafe_allow_html=True)
@@ -535,7 +537,6 @@ if not df_raw.empty:
         st.plotly_chart(style_graph_standard(fig, 550), use_container_width=True, config=config_download)
     st.markdown("---")
 
-
     # ==========================================
     # --- ANALYSES CLASSE & ANNÉE ---
     # ==========================================
@@ -571,4 +572,5 @@ if not df_raw.empty:
     st.markdown("<div style='text-align: center; color: #4b4b96; font-family: \"Comfortaa\"; font-size: 0.8rem; opacity: 0.8;'>© 2026 UCPA Aqua Stadium</div>", unsafe_allow_html=True)
 
 else: 
-    st.info("Chargement des données en cours...")
+    # Le nouveau message en cas de document vide
+    st.warning("Le document de suivi est actuellement vide. En attente des premières évaluations pour afficher les graphiques.")
